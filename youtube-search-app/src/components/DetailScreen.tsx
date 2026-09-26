@@ -1,4 +1,13 @@
-import {Panel, ReadMoreTextView, ScrollView, TextColor, TextStyle, TextView} from '@wearables-ui-toolkit/mrbd';
+import {
+  Panel,
+  ReadMoreTextView,
+  ScrollView,
+  Surface,
+  SurfaceCornerRadius,
+  TextColor,
+  TextStyle,
+  TextView,
+} from '@wearables-ui-toolkit/mrbd';
 import {formatRelativeDate, type VideoResult} from '../lib/youtube';
 
 export default function DetailScreen({video}: {video: VideoResult}) {
@@ -6,7 +15,15 @@ export default function DetailScreen({video}: {video: VideoResult}) {
     <ScrollView ariaLabel={`Details for ${video.title}`} tabIndex={0} insetForHeader>
       <Panel width="100%">
         <div className="detail-content">
-          <img className="detail-thumbnail" src={video.thumbnailUrl} alt="" />
+          <Surface cornerRadius={SurfaceCornerRadius.MEDIUM} className="detail-video-frame">
+            <iframe
+              className="detail-video"
+              src={`https://www.youtube.com/embed/${video.id}`}
+              title={video.title}
+              allow="clipboard-write; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </Surface>
 
           <TextView as="p" textStyle={TextStyle.BODY2_EMPHASIZED}>
             {video.channelTitle}
