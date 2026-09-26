@@ -86,18 +86,18 @@ export default function SearchScreen({
 
   return (
     <div className={`search-shell${hidden ? ' hidden' : ''}`}>
-      <div className="search-bar-row">
-        <InputTextView
-          text={queryText}
-          onTextChange={setQueryText}
-          hint="Search YouTube"
-          showActionButton
-          actionLabel="Search"
-          onSend={runSearch}
-        />
-      </div>
+      <VerticalList ariaLabel="Search YouTube" tabIndex={0} insetForHeader>
+        <div className="search-bar-row">
+          <InputTextView
+            text={queryText}
+            onTextChange={setQueryText}
+            hint="Search YouTube"
+            showActionButton
+            actionLabel="Search"
+            onSend={runSearch}
+          />
+        </div>
 
-      <VerticalList ariaLabel="Search results" tabIndex={0} insetForHeader={false}>
         {results.length > 0 ? (
           results.map(video => (
             <ListItem

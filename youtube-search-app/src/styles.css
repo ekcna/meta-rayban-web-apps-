@@ -48,7 +48,7 @@ body {
 
 .search-shell {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   block-size: 100%;
   min-block-size: 0;
   min-inline-size: 0;
@@ -60,7 +60,7 @@ body {
 }
 
 .search-bar-row {
-  padding: var(--uit-spacing-large) var(--uit-spacing-large) 0;
+  padding: 0 var(--uit-spacing-large) var(--uit-spacing-small);
 }
 
 .status-message {
