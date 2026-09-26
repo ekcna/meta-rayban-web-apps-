@@ -21,7 +21,6 @@ export default function DetailScreen({video}: {video: VideoResult}) {
               src={`https://www.youtube.com/embed/${video.id}`}
               title={video.title}
               allow="clipboard-write; encrypted-media; picture-in-picture; web-share"
-              allowFullScreen
             />
           </Surface>
 
