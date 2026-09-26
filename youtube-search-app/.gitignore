@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.wearables-test/
+qr-publish.png
+*.log
+
+.env
+.env.local
+.env.*.local
