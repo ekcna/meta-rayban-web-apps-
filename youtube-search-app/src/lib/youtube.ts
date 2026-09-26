@@ -9,6 +9,12 @@ export interface VideoResult {
   viewCount: string;
 }
 
+export interface ChannelResult {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+}
+
 export class YouTubeApiError extends Error {
   constructor(public userMessage: string) {
     super(userMessage);
@@ -51,6 +57,9 @@ async function readErrorMessage(response: Response): Promise<string> {
     if (reason === 'keyInvalid' || response.status === 400) {
       return 'That API key was rejected. Double-check it in wearables.config or your .env.local.';
     }
+    if (response.status === 401) {
+      return 'Your sign-in expired. Sign in again to continue.';
+    }
     if (body.error?.message) return body.error.message;
   } catch {
     // fall through to the generic message below
@@ -58,44 +67,103 @@ async function readErrorMessage(response: Response): Promise<string> {
   return `YouTube API request failed (${response.status}).`;
 }
 
+async function fetchJson<T>(url: string, signal: AbortSignal, accessToken?: string): Promise<T> {
+  const response = await fetch(url, {
+    signal,
+    headers: accessToken ? {Authorization: `Bearer ${accessToken}`} : undefined,
+  });
+  if (!response.ok) {
+    throw new YouTubeApiError(await readErrorMessage(response));
+  }
+  return response.json() as Promise<T>;
+}
+
+function mapVideoItem(item: VideosListItem): VideoResult {
+  return {
+    id: item.id,
+    title: item.snippet.title,
+    channelTitle: item.snippet.channelTitle,
+    publishedAt: item.snippet.publishedAt,
+    thumbnailUrl:
+      item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.default?.url ?? '',
+    description: item.snippet.description,
+    duration: formatDuration(item.contentDetails.duration),
+    viewCount: formatViewCount(item.statistics.viewCount),
+  };
+}
+
+async function fetchVideoDetails(
+  ids: string[],
+  apiKey: string,
+  signal: AbortSignal,
+): Promise<VideoResult[]> {
+  if (ids.length === 0) return [];
+  const url = `${API_BASE}/videos?part=snippet,contentDetails,statistics&id=${ids.join(',')}&key=${encodeURIComponent(apiKey)}`;
+  const body = await fetchJson<{items: VideosListItem[]}>(url, signal);
+  const byId = new Map(body.items.map(item => [item.id, item]));
+  return ids
+    .map(id => byId.get(id))
+    .filter((item): item is VideosListItem => Boolean(item))
+    .map(mapVideoItem);
+}
+
 export async function searchVideos(
   query: string,
   apiKey: string,
   signal: AbortSignal,
 ): Promise<VideoResult[]> {
-  const searchUrl = `${API_BASE}/search?part=snippet&type=video&maxResults=${MAX_RESULTS}&q=${encodeURIComponent(query)}&key=${encodeURIComponent(apiKey)}`;
-  const searchResponse = await fetch(searchUrl, {signal});
-  if (!searchResponse.ok) {
-    throw new YouTubeApiError(await readErrorMessage(searchResponse));
-  }
-  const searchBody = (await searchResponse.json()) as {items: SearchListItem[]};
-  const ids = searchBody.items
-    .map(item => item.id.videoId)
-    .filter((id): id is string => Boolean(id));
-  if (ids.length === 0) return [];
+  const url = `${API_BASE}/search?part=snippet&type=video&maxResults=${MAX_RESULTS}&q=${encodeURIComponent(query)}&key=${encodeURIComponent(apiKey)}`;
+  const body = await fetchJson<{items: SearchListItem[]}>(url, signal);
+  const ids = body.items.map(item => item.id.videoId).filter((id): id is string => Boolean(id));
+  return fetchVideoDetails(ids, apiKey, signal);
+}
 
-  const detailsUrl = `${API_BASE}/videos?part=snippet,contentDetails,statistics&id=${ids.join(',')}&key=${encodeURIComponent(apiKey)}`;
-  const detailsResponse = await fetch(detailsUrl, {signal});
-  if (!detailsResponse.ok) {
-    throw new YouTubeApiError(await readErrorMessage(detailsResponse));
-  }
-  const detailsBody = (await detailsResponse.json()) as {items: VideosListItem[]};
+export async function fetchTrending(apiKey: string, signal: AbortSignal): Promise<VideoResult[]> {
+  const url = `${API_BASE}/videos?part=snippet,contentDetails,statistics&chart=mostPopular&maxResults=20&key=${encodeURIComponent(apiKey)}`;
+  const body = await fetchJson<{items: VideosListItem[]}>(url, signal);
+  return body.items.map(mapVideoItem);
+}
 
-  const byId = new Map(detailsBody.items.map(item => [item.id, item]));
-  return ids
-    .map(id => byId.get(id))
-    .filter((item): item is VideosListItem => Boolean(item))
-    .map(item => ({
-      id: item.id,
-      title: item.snippet.title,
-      channelTitle: item.snippet.channelTitle,
-      publishedAt: item.snippet.publishedAt,
-      thumbnailUrl:
-        item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.default?.url ?? '',
-      description: item.snippet.description,
-      duration: formatDuration(item.contentDetails.duration),
-      viewCount: formatViewCount(item.statistics.viewCount),
-    }));
+export async function fetchShorts(apiKey: string, signal: AbortSignal): Promise<VideoResult[]> {
+  const url = `${API_BASE}/search?part=snippet&type=video&videoDuration=short&order=viewCount&maxResults=20&key=${encodeURIComponent(apiKey)}`;
+  const body = await fetchJson<{items: SearchListItem[]}>(url, signal);
+  const ids = body.items.map(item => item.id.videoId).filter((id): id is string => Boolean(id));
+  return fetchVideoDetails(ids, apiKey, signal);
+}
+
+interface SubscriptionListItem {
+  snippet: {
+    title: string;
+    resourceId: {channelId: string};
+    thumbnails: {
+      default?: {url: string};
+      medium?: {url: string};
+    };
+  };
+}
+
+export async function fetchSubscriptions(
+  accessToken: string,
+  signal: AbortSignal,
+): Promise<ChannelResult[]> {
+  const url = `${API_BASE}/subscriptions?part=snippet&mine=true&maxResults=50&order=alphabetical`;
+  const body = await fetchJson<{items: SubscriptionListItem[]}>(url, signal, accessToken);
+  return body.items.map(item => ({
+    id: item.snippet.resourceId.channelId,
+    title: item.snippet.title,
+    thumbnailUrl: item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.default?.url ?? '',
+  }));
+}
+
+export async function fetchChannelUploads(
+  channelId: string,
+  apiKey: string,
+  signal: AbortSignal,
+): Promise<VideoResult[]> {
+  const url = `${API_BASE}/search?part=snippet&type=video&channelId=${encodeURIComponent(channelId)}&order=date&maxResults=20&key=${encodeURIComponent(apiKey)}`;
+  const body = await fetchJson<{items: SearchListItem[]}>(url, signal);
+  const ids = body.items.map(item => item.id.videoId).filter((id): id is string => Boolean(id));
+  return fetchVideoDetails(ids, apiKey, signal);
 }
 
 export function formatDuration(iso8601: string): string {
