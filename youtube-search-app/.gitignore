@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-pages/
 .wearables-test/
 qr-publish.png
 *.log

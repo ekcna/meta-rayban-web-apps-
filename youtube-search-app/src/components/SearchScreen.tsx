@@ -8,10 +8,10 @@ import {
   Toast,
   VerticalList,
 } from '@wearables-ui-toolkit/mrbd';
+import {readApiKey, saveApiKey} from '../lib/apiKeyStore';
 import {searchVideos, YouTubeApiError, type VideoResult} from '../lib/youtube';
 import StatusMessage, {type SearchStatus} from './StatusMessage';
 
-const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY as string | undefined;
 const SUGGESTIONS = ['Lo-fi beats', 'Guitar lesson', 'News recap'];
 
 export default function SearchScreen({
@@ -22,9 +22,11 @@ export default function SearchScreen({
   onSelect: (video: VideoResult) => void;
 }) {
   const [queryText, setQueryText] = useState('');
+  const [keyDraft, setKeyDraft] = useState('');
+  const [apiKey, setApiKey] = useState<string | undefined>(() => readApiKey());
   const [results, setResults] = useState<VideoResult[]>([]);
   const [status, setStatus] = useState<SearchStatus>(
-    API_KEY ? {kind: 'idle'} : {kind: 'missingKey'},
+    apiKey ? {kind: 'idle'} : {kind: 'missingKey'},
   );
 
   const abortRef = useRef<AbortController | null>(null);
@@ -43,7 +45,7 @@ export default function SearchScreen({
 
   function runSearch(query: string) {
     const trimmed = query.trim();
-    if (!trimmed || !API_KEY) return;
+    if (!trimmed || !apiKey) return;
 
     if (!navigator.onLine) {
       setStatus({kind: 'offline'});
@@ -57,7 +59,7 @@ export default function SearchScreen({
     setResults([]);
     setStatus({kind: 'loading'});
 
-    searchVideos(trimmed, API_KEY, controller.signal)
+    searchVideos(trimmed, apiKey, controller.signal)
       .then(items => {
         setResults(items);
         setStatus(items.length === 0 ? {kind: 'empty', query: trimmed} : {kind: 'idle'});
@@ -82,6 +84,15 @@ export default function SearchScreen({
   function handleSuggestion(query: string) {
     setQueryText(query);
     runSearch(query);
+  }
+
+  function handleSaveKey(draft: string) {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    saveApiKey(trimmed);
+    setApiKey(trimmed);
+    setKeyDraft('');
+    setStatus({kind: 'idle'});
   }
 
   return (
@@ -117,6 +128,18 @@ export default function SearchScreen({
         ) : (
           <div className="content-inset status-message">
             <StatusMessage status={status} />
+            {status.kind === 'missingKey' && (
+              <div className="key-entry-row">
+                <InputTextView
+                  text={keyDraft}
+                  onTextChange={setKeyDraft}
+                  hint="Paste your API key"
+                  showActionButton
+                  actionLabel="Save"
+                  onSend={handleSaveKey}
+                />
+              </div>
+            )}
           </div>
         )}
       </VerticalList>

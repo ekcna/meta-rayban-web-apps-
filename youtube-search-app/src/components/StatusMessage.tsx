@@ -38,7 +38,7 @@ function describe(status: Exclude<SearchStatus, {kind: 'loading'}>): {heading: s
     case 'missingKey':
       return {
         heading: 'No API key configured',
-        body: 'Add a free YouTube Data API v3 key to VITE_YOUTUBE_API_KEY in .env.local, then restart the dev server.',
+        body: 'Paste a free YouTube Data API v3 key below — it stays only in this browser. (Developing locally? Set VITE_YOUTUBE_API_KEY in .env.local instead.)',
       };
     case 'offline':
       return {
