@@ -144,3 +144,121 @@ body {
   height: 100%;
   border: 0;
 }
+
+.keyboard-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: var(--uit-spacing-small);
+  padding: var(--uit-spacing-medium) var(--uit-spacing-small) var(--uit-spacing-small);
+  background: var(--uit-color-background-window);
+}
+
+.keyboard-overlay-header {
+  display: flex;
+  align-items: center;
+  gap: var(--uit-spacing-small);
+  flex: none;
+}
+
+.keyboard-overlay-header > :last-child {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.keyboard-back-btn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 0;
+}
+
+.keyboard-back-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.keyboard-keys {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-block-size: 0;
+  margin-top: var(--uit-spacing-large);
+}
+
+.keyboard-key-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.keyboard-key-row-1 {
+  padding: 0 14px;
+}
+
+.keyboard-key-row-2 {
+  padding: 0 32px;
+}
+
+.keyboard-key {
+  flex: 1 1 0;
+  max-width: 48px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f2f2f2;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+}
+
+.keyboard-key:active {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.keyboard-key-row-bottom {
+  margin-top: 2px;
+}
+
+.keyboard-key-wide {
+  flex: 1.6 1 0;
+  max-width: 68px;
+}
+
+.keyboard-key-space {
+  flex: 5 1 0;
+  max-width: none;
+}
+
+.keyboard-key-accent {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.keyboard-key-done {
+  flex: none;
+  width: 100%;
+  max-width: none;
+  height: 44px;
+  background: var(--uit-color-persistent-positive, #2fae60);
+  color: #06210f;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.keyboard-row-bottom {
+  margin-top: var(--uit-spacing-xsmall);
+}

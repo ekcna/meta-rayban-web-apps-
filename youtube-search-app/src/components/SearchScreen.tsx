@@ -10,6 +10,7 @@ import {
 } from '@wearables-ui-toolkit/mrbd';
 import {readApiKey, saveApiKey} from '../lib/apiKeyStore';
 import {searchVideos, YouTubeApiError, type VideoResult} from '../lib/youtube';
+import OnScreenKeyboard from './OnScreenKeyboard';
 import StatusMessage, {type SearchStatus} from './StatusMessage';
 
 const SUGGESTIONS = ['Lo-fi beats', 'Guitar lesson', 'News recap'];
@@ -22,6 +23,7 @@ export default function SearchScreen({
   onSelect: (video: VideoResult) => void;
 }) {
   const [queryText, setQueryText] = useState('');
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [keyDraft, setKeyDraft] = useState('');
   const [apiKey, setApiKey] = useState<string | undefined>(() => readApiKey());
   const [results, setResults] = useState<VideoResult[]>([]);
@@ -86,6 +88,11 @@ export default function SearchScreen({
     runSearch(query);
   }
 
+  function handleKeyboardSubmit() {
+    runSearch(queryText);
+    setKeyboardOpen(false);
+  }
+
   function handleSaveKey(draft: string) {
     const trimmed = draft.trim();
     if (!trimmed) return;
@@ -95,10 +102,23 @@ export default function SearchScreen({
     setStatus({kind: 'idle'});
   }
 
+  if (keyboardOpen) {
+    return (
+      <div className={`search-shell${hidden ? ' hidden' : ''}`}>
+        <OnScreenKeyboard
+          value={queryText}
+          onChange={setQueryText}
+          onSubmit={handleKeyboardSubmit}
+          onClose={() => setKeyboardOpen(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`search-shell${hidden ? ' hidden' : ''}`}>
       <VerticalList ariaLabel="Search YouTube" tabIndex={0} insetForHeader>
-        <div className="search-bar-row">
+        <div className="search-bar-row" onClick={() => setKeyboardOpen(true)}>
           <InputTextView
             text={queryText}
             onTextChange={setQueryText}
