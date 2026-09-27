@@ -1,6 +1,13 @@
 import {useState} from 'react';
-import {circlePlayOutline, filmStripStackOutline, flameOutline, searchOutline} from '@wearables-ui-toolkit/icons';
+import {
+  circlePlayOutline,
+  filmStripStackOutline,
+  flameOutline,
+  houseOutline,
+  searchOutline,
+} from '@wearables-ui-toolkit/icons';
 import {App as WearablesApp, Page, SubNavigationPager, useBackNavigation} from '@wearables-ui-toolkit/mrbd';
+import HomeScreen from './components/HomeScreen';
 import SearchScreen from './components/SearchScreen';
 import TrendingScreen from './components/TrendingScreen';
 import ShortsScreen from './components/ShortsScreen';
@@ -10,6 +17,7 @@ import {signIn} from './lib/googleAuth';
 import type {ChannelResult, VideoResult} from './lib/youtube';
 
 const TABS = [
+  {label: 'Home', icon: houseOutline},
   {label: 'Search', icon: searchOutline},
   {label: 'Trending', icon: flameOutline},
   {label: 'Shorts', icon: circlePlayOutline},
@@ -70,11 +78,12 @@ export default function App() {
             useBackButtonForHome={false}
             ariaLabel="Main menu"
           >
-            <SearchScreen hidden={activeTab !== 0} onSelect={handleSelect} />
-            <TrendingScreen hidden={activeTab !== 1} onSelect={handleSelect} />
-            <ShortsScreen hidden={activeTab !== 2} onSelect={handleSelect} />
+            <HomeScreen hidden={activeTab !== 0} accessToken={accessToken} onSelect={handleSelect} />
+            <SearchScreen hidden={activeTab !== 1} onSelect={handleSelect} />
+            <TrendingScreen hidden={activeTab !== 2} onSelect={handleSelect} />
+            <ShortsScreen hidden={activeTab !== 3} onSelect={handleSelect} />
             <SubscriptionsScreen
-              hidden={activeTab !== 3}
+              hidden={activeTab !== 4}
               accessToken={accessToken}
               onSignIn={handleSignIn}
               onSelect={handleSelect}
