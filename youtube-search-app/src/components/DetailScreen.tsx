@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {expandOutline} from '@wearables-ui-toolkit/icons';
 import {
   Button,
@@ -22,6 +23,21 @@ export default function DetailScreen({
   expanded: boolean;
   onToggleExpand: () => void;
 }) {
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+
+  useEffect(() => {
+    if (!expanded) return;
+    function handleResize() {
+      setViewportSize({width: window.innerWidth, height: window.innerHeight});
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [expanded]);
+
   return (
     <div className={`detail-shell${expanded ? ' expanded' : ''}`}>
       {expanded ? (
@@ -30,6 +46,8 @@ export default function DetailScreen({
             className="detail-video"
             src={`https://www.youtube.com/embed/${video.id}?autoplay=1`}
             title={video.title}
+            width={viewportSize.width}
+            height={viewportSize.height}
             allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
           />
         </div>
