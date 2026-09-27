@@ -92,18 +92,14 @@ export default function DeviceSignIn({
               Set up Google sign-in
             </TextView>
             <TextView as="p" textStyle={TextStyle.BODY2} textColor={TextColor.SECONDARY}>
-              Paste the Client ID and Client Secret from a "TVs and Limited Input devices" OAuth
-              client in your Google Cloud Console.
+              Paste the two values Google Cloud Console showed you after creating the "TVs and
+              Limited Input devices" OAuth client: the Client ID, then the Client secret.
             </TextView>
-            <InputTextView
-              text={clientIdDraft}
-              onTextChange={setClientIdDraft}
-              hint="Device Client ID"
-            />
+            <InputTextView text={clientIdDraft} onTextChange={setClientIdDraft} hint="Client ID" />
             <InputTextView
               text={clientSecretDraft}
               onTextChange={setClientSecretDraft}
-              hint="Device Client Secret"
+              hint="Client secret"
               showActionButton
               actionLabel="Save"
               onSend={handleSaveConfig}
