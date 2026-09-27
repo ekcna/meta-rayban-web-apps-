@@ -259,6 +259,90 @@ body {
   font-weight: 600;
 }
 
-.keyboard-row-bottom {
-  margin-top: var(--uit-spacing-xsmall);
+.home-card {
+  display: block;
+  width: 100%;
+  position: relative;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0 0 var(--uit-spacing-large);
+  margin: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.home-card-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--uit-corner-radius-medium);
+  background: var(--uit-color-background-elevation1);
+}
+
+.home-card-duration {
+  position: absolute;
+  right: var(--uit-spacing-small);
+  bottom: calc(var(--uit-spacing-large) + var(--uit-spacing-xsmall));
+  padding: 2px 6px;
+  border-radius: var(--uit-corner-radius-xsmall);
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--uit-color-text-inverse);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.home-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--uit-spacing-small);
+}
+
+.home-card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.device-signin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  padding: var(--uit-spacing-medium);
+  background: var(--uit-color-background-window);
+}
+
+.device-signin-close {
+  margin-bottom: var(--uit-spacing-medium);
+}
+
+.device-signin-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--uit-spacing-medium);
+  text-align: center;
+  padding: 0 var(--uit-spacing-small);
+}
+
+.device-signin-code {
+  padding: var(--uit-spacing-small) var(--uit-spacing-medium);
+  border-radius: var(--uit-corner-radius-medium);
+  background: var(--uit-color-background-input-field);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+}
+
+.device-signin-waiting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--uit-spacing-small);
 }

@@ -125,7 +125,7 @@ export async function fetchTrending(apiKey: string, signal: AbortSignal): Promis
 }
 
 export async function fetchShorts(apiKey: string, signal: AbortSignal): Promise<VideoResult[]> {
-  const url = `${API_BASE}/search?part=snippet&type=video&videoDuration=short&order=viewCount&maxResults=20&key=${encodeURIComponent(apiKey)}`;
+  const url = `${API_BASE}/search?part=snippet&type=video&videoDuration=short&order=viewCount&q=%23shorts&maxResults=20&key=${encodeURIComponent(apiKey)}`;
   const body = await fetchJson<{items: SearchListItem[]}>(url, signal);
   const ids = body.items.map(item => item.id.videoId).filter((id): id is string => Boolean(id));
   return fetchVideoDetails(ids, apiKey, signal);

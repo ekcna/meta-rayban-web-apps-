@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {AvatarShape, ListItem, VerticalList} from '@wearables-ui-toolkit/mrbd';
+import {TextColor, TextStyle, TextView, VerticalList} from '@wearables-ui-toolkit/mrbd';
 import {
   fetchChannelUploads,
   fetchSubscriptions,
@@ -50,7 +50,7 @@ export default function HomeScreen({
   const [results, setResults] = useState<VideoResult[]>([]);
   const [status, setStatus] = useState<SearchStatus>({kind: 'loading'});
   const loadedForRef = useRef<string | null>(null);
-  const itemRefs = useRef(new Map<string, HTMLDivElement>());
+  const itemRefs = useRef(new Map<string, HTMLButtonElement>());
   const lastSelectedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -119,22 +119,32 @@ export default function HomeScreen({
       <VerticalList ariaLabel="Recommended for you" tabIndex={0} insetForHeader>
         {results.length > 0 ? (
           results.map(video => (
-            <ListItem
+            <button
               key={video.id}
+              type="button"
+              className="home-card"
               ref={element => {
                 if (element) itemRefs.current.set(video.id, element);
               }}
-              title={video.title}
-              subtitle={`${video.channelTitle} · ${video.duration}`}
-              subtitleMaxLines={1}
-              avatarSrc={video.thumbnailUrl}
-              avatarShape={AvatarShape.ROUNDED_RECTANGLE}
-              avatarAlt=""
               onClick={() => {
                 lastSelectedIdRef.current = video.id;
                 onSelect(video);
               }}
-            />
+            >
+              <img className="home-card-thumb" src={video.thumbnailUrl} alt="" />
+              <span className="home-card-duration">{video.duration}</span>
+              <div className="home-card-body">
+                <TextView as="p" textStyle={TextStyle.BODY2_EMPHASIZED} className="home-card-title">
+                  {video.title}
+                </TextView>
+                <TextView as="p" textStyle={TextStyle.META2} textColor={TextColor.SECONDARY}>
+                  {video.channelTitle}
+                </TextView>
+                <TextView as="p" textStyle={TextStyle.META2} textColor={TextColor.SECONDARY}>
+                  {video.viewCount}
+                </TextView>
+              </div>
+            </button>
           ))
         ) : (
           <div className="content-inset status-message">

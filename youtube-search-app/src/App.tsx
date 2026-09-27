@@ -7,13 +7,13 @@ import {
   searchOutline,
 } from '@wearables-ui-toolkit/icons';
 import {App as WearablesApp, Page, SubNavigationPager, useBackNavigation} from '@wearables-ui-toolkit/mrbd';
+import DeviceSignIn from './components/DeviceSignIn';
 import HomeScreen from './components/HomeScreen';
 import SearchScreen from './components/SearchScreen';
 import TrendingScreen from './components/TrendingScreen';
 import ShortsScreen from './components/ShortsScreen';
 import SubscriptionsScreen from './components/SubscriptionsScreen';
 import DetailScreen from './components/DetailScreen';
-import {signIn} from './lib/googleAuth';
 import type {ChannelResult, VideoResult} from './lib/youtube';
 
 const TABS = [
@@ -30,19 +30,18 @@ export default function App() {
   const [videoExpanded, setVideoExpanded] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<ChannelResult | null>(null);
+  const [signInOpen, setSignInOpen] = useState(false);
 
   function handleSelect(video: VideoResult) {
     setVideoExpanded(false);
     setSelected(video);
   }
 
-  function handleSignIn() {
-    signIn()
-      .then(token => setAccessToken(token))
-      .catch(() => {});
-  }
-
   useBackNavigation(() => {
+    if (signInOpen) {
+      setSignInOpen(false);
+      return;
+    }
     if (videoExpanded) {
       setVideoExpanded(false);
       return;
@@ -85,7 +84,7 @@ export default function App() {
             <SubscriptionsScreen
               hidden={activeTab !== 4}
               accessToken={accessToken}
-              onSignIn={handleSignIn}
+              onSignIn={() => setSignInOpen(true)}
               onSelect={handleSelect}
               selectedChannel={selectedChannel}
               onSelectChannel={setSelectedChannel}
@@ -97,6 +96,16 @@ export default function App() {
               video={selected}
               expanded={videoExpanded}
               onToggleExpand={() => setVideoExpanded(current => !current)}
+            />
+          )}
+
+          {signInOpen && (
+            <DeviceSignIn
+              onSuccess={token => {
+                setAccessToken(token);
+                setSignInOpen(false);
+              }}
+              onClose={() => setSignInOpen(false)}
             />
           )}
         </div>
