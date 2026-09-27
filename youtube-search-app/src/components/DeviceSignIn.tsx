@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {chevronLeftOutline} from '@wearables-ui-toolkit/icons';
 import {
   Button,
@@ -34,17 +34,13 @@ export default function DeviceSignIn({
   const [clientIdDraft, setClientIdDraft] = useState('');
   const [clientSecretDraft, setClientSecretDraft] = useState('');
   const [step, setStep] = useState<Step>(config ? {kind: 'requesting'} : {kind: 'configuring'});
-  const abortRef = useRef<AbortController | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    return () => abortRef.current?.abort();
-  }, []);
+    if (!config) return;
 
-  useEffect(() => {
-    if (step.kind !== 'requesting' || !config) return;
-
+    setStep({kind: 'requesting'});
     const controller = new AbortController();
-    abortRef.current = controller;
 
     requestDeviceCode(config.clientId, controller.signal)
       .then(info => {
@@ -61,17 +57,17 @@ export default function DeviceSignIn({
       });
 
     return () => controller.abort();
+    // Only (re)start the flow when the config changes or a retry is requested —
+    // not on every internal step transition (that would abort our own poll loop).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step.kind, config]);
+  }, [attempt, config]);
 
   function handleSaveConfig() {
     const clientId = clientIdDraft.trim();
     const clientSecret = clientSecretDraft.trim();
     if (!clientId || !clientSecret) return;
-    const next = {clientId, clientSecret};
-    saveDeviceOAuthConfig(next);
-    setConfig(next);
-    setStep({kind: 'requesting'});
+    saveDeviceOAuthConfig({clientId, clientSecret});
+    setConfig({clientId, clientSecret});
   }
 
   return (
@@ -135,7 +131,7 @@ export default function DeviceSignIn({
             <TextView as="p" textStyle={TextStyle.BODY2}>
               {step.message}
             </TextView>
-            <Button title="Try again" onClick={() => setStep({kind: 'requesting'})} />
+            <Button title="Try again" onClick={() => setAttempt(current => current + 1)} />
           </>
         )}
       </div>
