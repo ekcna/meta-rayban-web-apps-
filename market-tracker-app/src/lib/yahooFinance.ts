@@ -13,13 +13,7 @@ interface YahooChartResponse {
   };
 }
 
-async function fetchOne(instrument: InstrumentDef, signal: AbortSignal): Promise<Ticker | null> {
-  const response = await fetch(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(instrument.symbol)}`,
-    {signal},
-  );
-  if (!response.ok) return null;
-  const body = (await response.json()) as YahooChartResponse;
+function parseChartResponse(instrument: InstrumentDef, body: YahooChartResponse): Ticker | null {
   const meta = body.chart.result?.[0]?.meta;
   const price = meta?.regularMarketPrice;
   const previousClose = meta?.previousClose ?? meta?.chartPreviousClose;
@@ -31,14 +25,50 @@ async function fetchOne(instrument: InstrumentDef, signal: AbortSignal): Promise
   };
 }
 
+async function fetchViaUrl(url: string, signal: AbortSignal): Promise<Response> {
+  const response = await fetch(url, {signal});
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response;
+}
+
+async function fetchOne(
+  instrument: InstrumentDef,
+  signal: AbortSignal,
+): Promise<{ticker: Ticker | null; lastError?: string}> {
+  const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(instrument.symbol)}`;
+
+  // Yahoo's unofficial endpoint doesn't reliably send CORS headers for arbitrary
+  // browser origins, so a direct fetch can fail even though the data is public.
+  // Try direct first (fastest, no third party), then fall back to a read-only
+  // CORS proxy that just relays the same response.
+  try {
+    const response = await fetchViaUrl(targetUrl, signal);
+    const body = (await response.json()) as YahooChartResponse;
+    return {ticker: parseChartResponse(instrument, body)};
+  } catch (directError) {
+    try {
+      const proxied = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+      const response = await fetchViaUrl(proxied, signal);
+      const body = (await response.json()) as YahooChartResponse;
+      return {ticker: parseChartResponse(instrument, body)};
+    } catch (proxyError) {
+      const directMsg = directError instanceof Error ? directError.message : 'unknown';
+      const proxyMsg = proxyError instanceof Error ? proxyError.message : 'unknown';
+      return {ticker: null, lastError: `direct: ${directMsg} · proxy: ${proxyMsg}`};
+    }
+  }
+}
+
 export async function fetchYahooQuotes(
   instruments: InstrumentDef[],
   signal: AbortSignal,
-): Promise<Ticker[]> {
-  const results = await Promise.all(
-    instruments.map(instrument => fetchOne(instrument, signal).catch(() => null)),
-  );
-  return results.filter((ticker): ticker is Ticker => ticker !== null);
+): Promise<{tickers: Ticker[]; lastError?: string}> {
+  const results = await Promise.all(instruments.map(instrument => fetchOne(instrument, signal)));
+  const tickers = results
+    .map(r => r.ticker)
+    .filter((ticker): ticker is Ticker => ticker !== null);
+  const lastError = results.find(r => r.lastError)?.lastError;
+  return {tickers, lastError};
 }
 
 export function pollYahooQuotes(
@@ -53,9 +83,9 @@ export function pollYahooQuotes(
 
   async function poll() {
     try {
-      const tickers = await fetchYahooQuotes(instruments, controller.signal);
+      const {tickers, lastError} = await fetchYahooQuotes(instruments, controller.signal);
       if (tickers.length === 0) {
-        onError("Couldn't reach delayed market data for these symbols.");
+        onError(lastError ? `Couldn't reach delayed market data (${lastError}).` : "Couldn't reach delayed market data.");
       } else {
         tickers.forEach(onTick);
       }
